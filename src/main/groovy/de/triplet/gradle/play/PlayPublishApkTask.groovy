@@ -18,23 +18,28 @@ class PlayPublishApkTask extends PlayPublishTask {
     publishApks() {
         super.publish()
 
+
+        List<Integer> versionCodes = new ArrayList<Integer>()
+
         variant.outputs
-                .findAll { variantOutput -> variantOutput instanceof ApkVariantOutput }
-                .each { variantOutput -> publishApk(new FileContent(AndroidPublisherHelper.MIME_TYPE_APK, variantOutput.outputFile))}
-    }
+            .findAll { variantOutput -> variantOutput instanceof ApkVariantOutput }
+            .each { variantOutput -> versionCodes.add(publishApk(new FileContent(AndroidPublisherHelper.MIME_TYPE_APK, variantOutput.outputFile)).getVersionCode())}
 
-    def publishApk(apkFile) {
-
-        Apk apk = edits.apks()
-                .upload(variant.applicationId, editId, apkFile)
-                .execute()
-
-        Track newTrack = new Track().setVersionCodes([apk.getVersionCode()])
+        Track track = new Track().setVersionCodes(versionCodes)
         if (extension.track?.equals("rollout")) {
             newTrack.setUserFraction(extension.userFraction)
         }
         edits.tracks()
-                .update(variant.applicationId, editId, extension.track, newTrack)
+                .update(variant.applicationId, editId, extension.track, track)
+                .execute()
+
+        edits.commit(variant.applicationId, editId).execute()
+    }
+
+    def Apk publishApk(apkFile) {
+
+        Apk apk = edits.apks()
+                .upload(variant.applicationId, editId, apkFile)
                 .execute()
 
         if (inputFolder.exists()) {
@@ -58,10 +63,9 @@ class PlayPublishApkTask extends PlayPublishTask {
                             .execute()
                 }
             }
-
         }
 
-        edits.commit(variant.applicationId, editId).execute()
+        return apk
     }
 
 }
