@@ -43,8 +43,6 @@ class PlayPublisherPlugin implements Plugin<Project> {
             def publishListingTaskName = "publishListing${variationName}"
             def publishTaskName = "publish${variationName}"
 
-            def zipAlignTask = project.tasks."zipalign${variationName}"
-
             def variantData = variant.variantData
 
             // Create and configure bootstrap task for this variant.
@@ -86,7 +84,7 @@ class PlayPublisherPlugin implements Plugin<Project> {
             // Attach tasks to task graph.
             publishListingTask.dependsOn playResourcesTask
 
-            if (zipAlignTask && variantData.zipAlignEnabled) {
+            if (variantData.zipAlignEnabled) {
                 // Create and configure publisher apk task for this variant.
                 def publishApkTask = project.tasks.create(publishApkTaskName, PlayPublishApkTask)
                 publishApkTask.extension = extension
